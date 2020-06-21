@@ -34,11 +34,11 @@ class ScaleChangedModel {
   ///是否是滑动到了右边界
   bool isRightBorder = true;
 
-  ScaleChangedModel preModel;
-
+  Offset focalOffset;
+  Offset preFocalOffset;
   SlideDirectionType currentSlideDirectionType=SlideDirectionType.none;
 
-  ScaleChangedModel({this.scale, this.offset, this.size,this.preModel}) {
+  ScaleChangedModel({this.scale, this.offset, this.size, this.focalOffset, this. preFocalOffset}) {
     Offset offset = this.offset;
     double dx = offset.dx;
     double dy = offset.dy;
@@ -63,14 +63,17 @@ class ScaleChangedModel {
       }
     }
 
-    if(preModel!=null){
-      Offset preOffset = preModel.offset;
-      double preDx = preOffset.dx;
-      double preDy = preOffset.dy;
+    if(preFocalOffset!=null&&focalOffset!=null){
 
-      double flagDx = dx - preDx;
+      double preDx = preFocalOffset.dx;
+      double preDy = preFocalOffset.dy;
 
-      double flagDy = dy - preDy;
+      double focalDx = focalOffset.dx;
+      double focalDy = focalOffset.dy;
+
+      double flagDx = focalDx - preDx;
+
+      double flagDy = focalDy - preDy;
 
       print("flagDx $flagDx  flagDy $flagDy");
     }
@@ -160,13 +163,14 @@ class _TouchableContainerState extends State<TouchableContainer>
       // Ensure that image location under the focal point stays in the same place despite scaling.
       _offset = _clampOffset(details.focalPoint - _normalizedOffset * _scale);
     });
+    Offset focalOffset = details.focalPoint;
     ScaleChangedModel model =
-        new ScaleChangedModel(scale: _scale, offset: _offset,size: context.size,preModel:preScaleChangedModel);
-    preScaleChangedModel = model;
+        new ScaleChangedModel(scale: _scale, offset: _offset,size: context.size,focalOffset:focalOffset,preFocalOffset:_preFocalOffset);
+    _preFocalOffset = focalOffset;
     if (widget.scaleChanged != null) widget.scaleChanged(model);
   }
 
-  ScaleChangedModel preScaleChangedModel;
+  Offset _preFocalOffset ;
 
   void _handleOnScaleEnd(gd.ScaleEndDetails details) {
     final double magnitude = details.velocity.pixelsPerSecond.distance;
