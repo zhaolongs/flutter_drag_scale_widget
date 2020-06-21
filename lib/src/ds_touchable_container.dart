@@ -36,9 +36,11 @@ class ScaleChangedModel {
 
   Offset focalOffset;
   Offset preFocalOffset;
-  SlideDirectionType currentSlideDirectionType=SlideDirectionType.none;
 
-  ScaleChangedModel({this.scale, this.offset, this.size, this.focalOffset, this. preFocalOffset}) {
+  SlideDirectionType currentVerticalSlideDirectionType=SlideDirectionType.none;
+  SlideDirectionType currentHorizontalSlideDirectionType=SlideDirectionType.none;
+
+  ScaleChangedModel({this.scale, this.offset, this.size, this.focalOffset, this. preFocalOffset, double currentScale}) {
     Offset offset = this.offset;
     double dx = offset.dx;
     double dy = offset.dy;
@@ -63,7 +65,7 @@ class ScaleChangedModel {
       }
     }
 
-    if(preFocalOffset!=null&&focalOffset!=null){
+    if(preFocalOffset!=null&&focalOffset!=null &&currentScale==1.0){
 
       double preDx = preFocalOffset.dx;
       double preDy = preFocalOffset.dy;
@@ -75,8 +77,24 @@ class ScaleChangedModel {
 
       double flagDy = focalDy - preDy;
 
-      print("flagDx $flagDx  flagDy $flagDy");
+      if(flagDx<0){
+        currentHorizontalSlideDirectionType = SlideDirectionType.tooRight;
+      }else{
+        currentHorizontalSlideDirectionType = SlideDirectionType.toLeft;
+      }
+
+      if(flagDy<0){
+        currentVerticalSlideDirectionType = SlideDirectionType.toBottom;
+      }else{
+        currentVerticalSlideDirectionType = SlideDirectionType.toTop;
+      }
+
+      // print("currentVerticalSlideDirectionType $currentVerticalSlideDirectionType  currentHorizontalSlideDirectionType $currentHorizontalSlideDirectionType");
+    }else{
+      currentVerticalSlideDirectionType = SlideDirectionType.none;
+      currentHorizontalSlideDirectionType = SlideDirectionType.none;
     }
+
 
   }
 
@@ -156,6 +174,7 @@ class _TouchableContainerState extends State<TouchableContainer>
   }
 
   void _handleOnScaleUpdate(gd.ScaleUpdateDetails details) {
+    double currentScale = details.scale;
     setState(() {
       if (details.pointCount > 1) {
         _scale = (_previousScale * details.scale).clamp(1.0, double.infinity);
@@ -165,7 +184,7 @@ class _TouchableContainerState extends State<TouchableContainer>
     });
     Offset focalOffset = details.focalPoint;
     ScaleChangedModel model =
-        new ScaleChangedModel(scale: _scale, offset: _offset,size: context.size,focalOffset:focalOffset,preFocalOffset:_preFocalOffset);
+        new ScaleChangedModel(scale: _scale,currentScale:currentScale, offset: _offset,size: context.size,focalOffset:focalOffset,preFocalOffset:_preFocalOffset);
     _preFocalOffset = focalOffset;
     if (widget.scaleChanged != null) widget.scaleChanged(model);
   }
