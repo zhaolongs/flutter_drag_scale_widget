@@ -12,6 +12,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import './ds_gesture_detector.dart' as gd;
 
+
+enum SlideDirectionType{
+  none,
+  toLeft,
+  toTop,
+  toBottom,
+  tooRight,
+}
+
 class ScaleChangedModel {
   double scale;
   Offset offset;
@@ -25,27 +34,47 @@ class ScaleChangedModel {
   ///是否是滑动到了右边界
   bool isRightBorder = true;
 
-  ScaleChangedModel({this.scale, this.offset, this.size}) {
+  ScaleChangedModel preModel;
+
+  SlideDirectionType currentSlideDirectionType=SlideDirectionType.none;
+
+  ScaleChangedModel({this.scale, this.offset, this.size,this.preModel}) {
     Offset offset = this.offset;
     double dx = offset.dx;
+    double dy = offset.dy;
+
     Size size = this.size;
     if (size != null) {
       double width = size.width;
       int move = (width + dx.abs()).toInt();
       int imagWidth = (width * scale).toInt();
+      print("dx $dx  move $move  imagWidth$imagWidth");
       ///放大的图像是否滑动到了右边界
       if (move == imagWidth) {
-        isRightBorder = true;
+        this.isRightBorder = true;
       } else {
-        isLeftBorder = false;
+        this.isRightBorder = false;
       }
       ///放大的图像是否滑动到了左边界
       if (dx == 0) {
-        isLeftBorder = true;
+        this. isLeftBorder = true;
       } else {
-        isLeftBorder = false;
+        this.isLeftBorder = false;
       }
     }
+
+    if(preModel!=null){
+      Offset preOffset = preModel.offset;
+      double preDx = preOffset.dx;
+      double preDy = preOffset.dy;
+
+      double flagDx = dx - preDx;
+
+      double flagDy = dy - preDy;
+
+      print("flagDx $flagDx  flagDy $flagDy");
+    }
+
   }
 
   @override
@@ -132,9 +161,12 @@ class _TouchableContainerState extends State<TouchableContainer>
       _offset = _clampOffset(details.focalPoint - _normalizedOffset * _scale);
     });
     ScaleChangedModel model =
-        new ScaleChangedModel(scale: _scale, offset: _offset);
+        new ScaleChangedModel(scale: _scale, offset: _offset,size: context.size,preModel:preScaleChangedModel);
+    preScaleChangedModel = model;
     if (widget.scaleChanged != null) widget.scaleChanged(model);
   }
+
+  ScaleChangedModel preScaleChangedModel;
 
   void _handleOnScaleEnd(gd.ScaleEndDetails details) {
     final double magnitude = details.velocity.pixelsPerSecond.distance;
