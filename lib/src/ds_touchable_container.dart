@@ -15,11 +15,42 @@ import './ds_gesture_detector.dart' as gd;
 class ScaleChangedModel {
   double scale;
   Offset offset;
-  ScaleChangedModel({this.scale, this.offset});
+
+  //容器的大小
+  Size size;
+
+  ///是否是滑动到了左边界
+  bool isLeftBorder = true;
+
+  ///是否是滑动到了右边界
+  bool isRightBorder = true;
+
+  ScaleChangedModel({this.scale, this.offset, this.size}) {
+    Offset offset = this.offset;
+    double dx = offset.dx;
+    Size size = this.size;
+    if (size != null) {
+      double width = size.width;
+      int move = (width + dx.abs()).toInt();
+      int imagWidth = (width * scale).toInt();
+      ///放大的图像是否滑动到了右边界
+      if (move == imagWidth) {
+        isRightBorder = true;
+      } else {
+        isLeftBorder = false;
+      }
+      ///放大的图像是否滑动到了左边界
+      if (dx == 0) {
+        isLeftBorder = true;
+      } else {
+        isLeftBorder = false;
+      }
+    }
+  }
 
   @override
   String toString() {
-    return 'ScaleChangedModel(scale: $scale, offset:$offset)';
+    return 'ScaleChangedModel(scale: $scale, offset:$offset size $size )';
   }
 }
 
@@ -34,10 +65,11 @@ class TouchableContainer extends StatefulWidget {
 
   TouchableContainer(
       {this.child,
-        EdgeInsets margin,
-        this.scaleChanged,
-        this.doubleTapStillScale})
+      EdgeInsets margin,
+      this.scaleChanged,
+      this.doubleTapStillScale})
       : this.margin = margin ?? EdgeInsets.all(0);
+
   _TouchableContainerState createState() => _TouchableContainerState();
 }
 
@@ -51,6 +83,7 @@ class _TouchableContainerState extends State<TouchableContainer>
   Offset _normalizedOffset;
   double _previousScale;
   Offset doubleDownPositon;
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +132,7 @@ class _TouchableContainerState extends State<TouchableContainer>
       _offset = _clampOffset(details.focalPoint - _normalizedOffset * _scale);
     });
     ScaleChangedModel model =
-    new ScaleChangedModel(scale: _scale, offset: _offset);
+        new ScaleChangedModel(scale: _scale, offset: _offset);
     if (widget.scaleChanged != null) widget.scaleChanged(model);
   }
 
@@ -109,7 +142,7 @@ class _TouchableContainerState extends State<TouchableContainer>
     final Offset direction = details.velocity.pixelsPerSecond / magnitude;
     final double distance = (Offset.zero & context.size).shortestSide;
     _flingAnimation = new Tween<Offset>(
-        begin: _offset, end: _clampOffset(_offset + direction * distance))
+            begin: _offset, end: _clampOffset(_offset + direction * distance))
         .animate(_controller);
     _controller
       ..value = 0.0
@@ -138,7 +171,7 @@ class _TouchableContainerState extends State<TouchableContainer>
     });
 
     ScaleChangedModel model =
-    new ScaleChangedModel(scale: _scale, offset: _offset);
+        new ScaleChangedModel(scale: _scale, offset: _offset);
     if (widget.scaleChanged != null) widget.scaleChanged(model);
   }
 
