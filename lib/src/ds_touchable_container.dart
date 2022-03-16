@@ -1,15 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/**
- * 创建人： Created by zhaolong
- * 创建时间：Created by  on 2020/6/15.
- *
- * 可关注公众号：我的大前端生涯   获取最新技术分享
- * 可关注网易云课堂：https://study.163.com/instructor/1021406098.htm
- * 可关注博客：https://blog.csdn.net/zl18603543572
- */
-import 'package:flutter/material.dart';
 import './ds_gesture_detector.dart' as gd;
 
 
@@ -40,7 +31,7 @@ class ScaleChangedModel {
   SlideDirectionType currentVerticalSlideDirectionType=SlideDirectionType.none;
   SlideDirectionType currentHorizontalSlideDirectionType=SlideDirectionType.none;
 
-  ScaleChangedModel({this.scale, this.offset, this.size, this.focalOffset, this. preFocalOffset, double currentScale}) {
+  ScaleChangedModel({this.scale=1.0, this.offset=Offset.zero, this.size=Size.zero, this.focalOffset=Offset.zero, this. preFocalOffset=Offset.zero, double currentScale=1.0}) {
     Offset offset = this.offset;
     double dx = offset.dx;
     double dy = offset.dy;
@@ -111,13 +102,13 @@ class TouchableContainer extends StatefulWidget {
   ///用来约束图和坐标轴的
   ///因为坐标轴和图是堆叠起来的，图在坐标轴的内部，需要制定margin，否则放大后图会超出坐标轴
   final EdgeInsets margin;
-  ValueChanged<ScaleChangedModel> scaleChanged;
+  ValueChanged<ScaleChangedModel> ?scaleChanged;
 
   TouchableContainer(
-      {this.child,
-      EdgeInsets margin,
+      {required this.child,
+      EdgeInsets margin=EdgeInsets.zero,
       this.scaleChanged,
-      this.doubleTapStillScale})
+      this.doubleTapStillScale=false})
       : this.margin = margin ?? EdgeInsets.all(0);
 
   _TouchableContainerState createState() => _TouchableContainerState();
@@ -126,13 +117,13 @@ class TouchableContainer extends StatefulWidget {
 class _TouchableContainerState extends State<TouchableContainer>
     with SingleTickerProviderStateMixin {
   double _kMinFlingVelocity = 800.0;
-  AnimationController _controller;
-  Animation<Offset> _flingAnimation;
+  late AnimationController _controller;
+  Animation<Offset> ?_flingAnimation;
   Offset _offset = Offset.zero;
   double _scale = 1.0;
-  Offset _normalizedOffset;
-  double _previousScale;
-  Offset doubleDownPositon;
+  Offset _normalizedOffset=Offset.zero;
+  double _previousScale=1.0;
+  Offset doubleDownPositon=Offset(0, 0);
 
   @override
   void initState() {
@@ -151,7 +142,7 @@ class _TouchableContainerState extends State<TouchableContainer>
   // then the minimum offset value is w - _scale * w, h - _scale * h.
   //也就是最小值是原点0，0，点从最大值到0的区间，也就是这个图可以从最大值移动到原点
   Offset _clampOffset(Offset offset) {
-    final Size size = context.size; //容器的大小
+    final Size size = context.size??Size(0, 0); //容器的大小
     final Offset minOffset =
         new Offset(size.width, size.height) * (1.0 - _scale);
     return new Offset(
@@ -159,9 +150,11 @@ class _TouchableContainerState extends State<TouchableContainer>
   }
 
   void _handleFlingAnimation() {
-    setState(() {
-      _offset = _flingAnimation.value;
-    });
+    if(_flingAnimation!=null) {
+      setState(() {
+        _offset = _flingAnimation!.value;
+      });
+    }
   }
 
   void _handleOnScaleStart(gd.ScaleStartDetails details) {
@@ -184,18 +177,18 @@ class _TouchableContainerState extends State<TouchableContainer>
     });
     Offset focalOffset = details.focalPoint;
     ScaleChangedModel model =
-        new ScaleChangedModel(scale: _scale,currentScale:currentScale, offset: _offset,size: context.size,focalOffset:focalOffset,preFocalOffset:_preFocalOffset);
+        new ScaleChangedModel(scale: _scale,currentScale:currentScale, offset: _offset,size: context.size??Size.zero,focalOffset:focalOffset,preFocalOffset:_preFocalOffset);
     _preFocalOffset = focalOffset;
-    if (widget.scaleChanged != null) widget.scaleChanged(model);
+    if (widget.scaleChanged != null) widget.scaleChanged!(model);
   }
 
-  Offset _preFocalOffset ;
+  Offset _preFocalOffset=Offset(0, 0) ;
 
   void _handleOnScaleEnd(gd.ScaleEndDetails details) {
     final double magnitude = details.velocity.pixelsPerSecond.distance;
     if (magnitude < _kMinFlingVelocity) return;
     final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-    final double distance = (Offset.zero & context.size).shortestSide;
+    final double distance = (Offset.zero & (context.size??Size.zero)).shortestSide;
     _flingAnimation = new Tween<Offset>(
             begin: _offset, end: _clampOffset(_offset + direction * distance))
         .animate(_controller);
@@ -227,7 +220,7 @@ class _TouchableContainerState extends State<TouchableContainer>
 
     ScaleChangedModel model =
         new ScaleChangedModel(scale: _scale, offset: _offset);
-    if (widget.scaleChanged != null) widget.scaleChanged(model);
+    if (widget.scaleChanged != null) widget.scaleChanged!(model);
   }
 
   @override

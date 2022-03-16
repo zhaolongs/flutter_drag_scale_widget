@@ -1,11 +1,12 @@
-name: flutterdragscalewidget
+name: flutter_drag_scale_widget
 description: 对子Widget的拖动、缩放、旋转
-version: 0.0.1
-author:
-homepage:
+version: 1.0.0
+
+homepage: https://github.com/zhaolongs/flutter_drag_scale_widget.git
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
+  flutter: ">=2.5.0"
 
 dependencies:
   flutter:

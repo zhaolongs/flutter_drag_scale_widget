@@ -1,13 +1,14 @@
+import 'dart:async' show Timer;
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
-import 'dart:async' show Timer;
-
 import 'package:flutter/src/gestures/arena.dart';
 import 'package:flutter/src/gestures/constants.dart';
 import 'package:flutter/src/gestures/events.dart';
 import 'package:flutter/src/gestures/recognizer.dart';
 import 'package:flutter/src/gestures/velocity_tracker.dart';
+
 import './ds_double_details.dart';
 
 /**
@@ -18,7 +19,6 @@ import './ds_double_details.dart';
  * 可关注网易云课堂：https://study.163.com/instructor/1021406098.htm
  * 可关注博客：https://blog.csdn.net/zl18603543572
  */
-
 
 /// The possible states of a [ScaleGestureRecognizer].
 enum _ScaleState {
@@ -65,7 +65,7 @@ class ScaleUpdateDetails {
     this.focalPoint = Offset.zero,
     this.scale = 1.0,
     this.rotation = 0.0,
-    this.pointerEvent,
+    required this.pointerEvent,
     this.pointCount = 1,
   })  : assert(scale != null && scale >= 0.0),
         assert(rotation != null);
@@ -131,12 +131,10 @@ class _LineBetweenPointers {
   /// should be different.
   _LineBetweenPointers(
       {this.pointerStartLocation = Offset.zero,
-        this.pointerStartId = 0,
-        this.pointerEndLocation = Offset.zero,
-        this.pointerEndId = 1})
-      : assert(pointerStartLocation != null && pointerEndLocation != null),
-        assert(pointerStartId != null && pointerEndId != null),
-        assert(pointerStartId != pointerEndId);
+      this.pointerStartId = 0,
+      this.pointerEndLocation = Offset.zero,
+      this.pointerEndId = 1})
+      : assert(pointerStartId != pointerEndId);
 
   // The location and the id of the pointer that marks the start of the line.
   final Offset pointerStartLocation;
@@ -156,35 +154,41 @@ class _LineBetweenPointers {
 /// are no longer in contact with the screen, the recognizer calls [onEnd].
 class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
   /// Create a gesture recognizer for interactions intended for scaling content.
-  ScaleGestureRecognizer({Object debugOwner}) : super(debugOwner: debugOwner);
+  ScaleGestureRecognizer(
+      {Object? debugOwner,
+      this.onStart,
+      this.onUpdate,
+      this.onDoubleTap,
+      this.onEnd})
+      : super(debugOwner: debugOwner);
 
   /// The pointers in contact with the screen have established a focal point and
   /// initial scale of 1.0.
-  GestureScaleStartCallback onStart;
+  GestureScaleStartCallback? onStart;
 
   /// The pointers in contact with the screen have indicated a new focal point
   /// and/or scale.
-  GestureScaleUpdateCallback onUpdate;
+  GestureScaleUpdateCallback? onUpdate;
 
   /// The pointers are no longer in contact with the screen.
-  GestureScaleEndCallback onEnd;
+  GestureScaleEndCallback? onEnd;
 
   _ScaleState _state = _ScaleState.ready;
 
-  Offset _initialFocalPoint;
-  Offset _currentFocalPoint;
-  double _initialSpan;
-  double _currentSpan;
-  _LineBetweenPointers _initialLine;
-  _LineBetweenPointers _currentLine;
-  Map<int, Offset> _pointerLocations;
-  List<int> _pointerQueue;
+  Offset _initialFocalPoint = Offset.zero;
+  Offset _currentFocalPoint = Offset.zero;
+  double _initialSpan = 1.0;
+  double _currentSpan = 1.0;
+  _LineBetweenPointers? _initialLine;
+  _LineBetweenPointers? _currentLine;
+  Map<int, Offset>? _pointerLocations;
+  List<int>? _pointerQueue;
   int pointCount = 0;
   bool isOnlyOnePoint = true; // 表示
   /// --------------------------DoubleTap-start--------------------------
   /// Called when the user has tapped the screen at the same location twice in
   /// quick succession.
-  GestureDoubleTapCallback onDoubleTap;
+  GestureDoubleTapCallback? onDoubleTap;
 
   /// is track pointer
   /// 是否追踪手指
@@ -193,7 +197,7 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
   bool isFirstTap = true;
 
   /// timer
-  Timer _doubleTapTimer;
+  Timer? _doubleTapTimer;
 
   /// start track pointer
   /// 开始追踪双击手指
@@ -236,8 +240,8 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
 
   void _registerSecondTap(PointerEvent event) {
     if (onDoubleTap != null)
-      invokeCallback<void>(
-          'onDoubleTap', () => onDoubleTap(DoubleDetails(pointerEvent: event)));
+      invokeCallback<void>('onDoubleTap',
+          () => onDoubleTap!(DoubleDetails(pointerEvent: event)));
     _reset();
   }
 
@@ -247,7 +251,7 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
 
   void _stopDoubleTapTimer() {
     if (_doubleTapTimer != null) {
-      _doubleTapTimer.cancel();
+      _doubleTapTimer!.cancel();
       _doubleTapTimer = null;
     }
   }
@@ -282,15 +286,15 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
     if (_initialLine == null || _currentLine == null) {
       return 0.0;
     }
-    final double fx = _initialLine.pointerStartLocation.dx;
-    final double fy = _initialLine.pointerStartLocation.dy;
-    final double sx = _initialLine.pointerEndLocation.dx;
-    final double sy = _initialLine.pointerEndLocation.dy;
+    final double fx = _initialLine!.pointerStartLocation.dx;
+    final double fy = _initialLine!.pointerStartLocation.dy;
+    final double sx = _initialLine!.pointerEndLocation.dx;
+    final double sy = _initialLine!.pointerEndLocation.dy;
 
-    final double nfx = _currentLine.pointerStartLocation.dx;
-    final double nfy = _currentLine.pointerStartLocation.dy;
-    final double nsx = _currentLine.pointerEndLocation.dx;
-    final double nsy = _currentLine.pointerEndLocation.dy;
+    final double nfx = _currentLine!.pointerStartLocation.dx;
+    final double nfy = _currentLine!.pointerStartLocation.dy;
+    final double nsx = _currentLine!.pointerEndLocation.dx;
+    final double nsy = _currentLine!.pointerEndLocation.dy;
 
     final double angle1 = math.atan2(fy - sy, fx - sx);
     final double angle2 = math.atan2(nfy - nsy, nfx - nsx);
@@ -301,7 +305,7 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
   @override
   void addPointer(PointerEvent event) {
     startTrackingPointer(event.pointer);
-    _velocityTrackers[event.pointer] = VelocityTracker();
+    _velocityTrackers[event.pointer] =  VelocityTracker.withKind(PointerDeviceKind.touch);
     if (_state == _ScaleState.ready) {
       _state = _ScaleState.possible;
       _initialSpan = 0.0;
@@ -321,33 +325,38 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
     bool didChangeConfiguration = false;
     bool shouldStartIfAccepted = false;
     if (event is PointerMoveEvent) {
-      final VelocityTracker tracker = _velocityTrackers[event.pointer];
+      final VelocityTracker? tracker = _velocityTrackers[event.pointer];
       assert(tracker != null);
       if (!event.synthesized)
-        tracker.addPosition(event.timeStamp, event.position);
-      _pointerLocations[event.pointer] = event.position;
+        tracker!.addPosition(event.timeStamp, event.position);
+      _pointerLocations![event.pointer] = event.position;
       shouldStartIfAccepted = true;
 
-      pointCount = _pointerLocations.keys.length;
+      pointCount = _pointerLocations!.keys.length;
       if (pointCount <= 1 && onUpdate != null && isOnlyOnePoint && !isFirstTap)
         invokeCallback<void>(
             'onUpdate',
-                () => onUpdate(ScaleUpdateDetails(
-                scale: _scaleFactor,
-                focalPoint: _currentFocalPoint,
-                rotation: _computeRotationFactor(),
-                pointerEvent: event,
-                pointCount: pointCount)));
+            () => {
+                  if (onUpdate != null)
+                    {
+                      onUpdate!(ScaleUpdateDetails(
+                          scale: _scaleFactor,
+                          focalPoint: _currentFocalPoint,
+                          rotation: _computeRotationFactor(),
+                          pointerEvent: event,
+                          pointCount: pointCount))
+                    }
+                });
     } else if (event is PointerDownEvent) {
-      isOnlyOnePoint = _pointerQueue.length == 0;
+      isOnlyOnePoint = _pointerQueue!.length == 0;
 
-      _pointerLocations[event.pointer] = event.position;
-      _pointerQueue.add(event.pointer);
+      _pointerLocations![event.pointer] = event.position;
+      _pointerQueue!.add(event.pointer);
       didChangeConfiguration = true;
       shouldStartIfAccepted = true;
     } else if (event is PointerUpEvent || event is PointerCancelEvent) {
-      _pointerLocations.remove(event.pointer);
-      _pointerQueue.remove(event.pointer);
+      _pointerLocations!.remove(event.pointer);
+      _pointerQueue!.remove(event.pointer);
       didChangeConfiguration = true;
     }
     _updateLines();
@@ -360,48 +369,48 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
   }
 
   void _update() {
-    final int count = _pointerLocations.keys.length;
+    final int count = _pointerLocations!.keys.length;
 
     // Compute the focal point
     Offset focalPoint = Offset.zero;
-    for (int pointer in _pointerLocations.keys)
-      focalPoint += _pointerLocations[pointer];
+    for (int pointer in _pointerLocations!.keys)
+      focalPoint += _pointerLocations![pointer]!;
     _currentFocalPoint =
-    count > 0 ? focalPoint / count.toDouble() : Offset.zero;
+        count > 0 ? focalPoint / count.toDouble() : Offset.zero;
 
     // Span is the average deviation from focal point
     double totalDeviation = 0.0;
-    for (int pointer in _pointerLocations.keys)
+    for (int pointer in _pointerLocations!.keys)
       totalDeviation +=
-          (_currentFocalPoint - _pointerLocations[pointer]).distance;
+          (_currentFocalPoint - _pointerLocations![pointer]!).distance;
     _currentSpan = count > 0 ? totalDeviation / count : 0.0;
   }
 
   /// Updates [_initialLine] and [_currentLine] accordingly to the situation of
   /// the registered pointers
   void _updateLines() {
-    final int count = _pointerLocations.keys.length;
-    assert(_pointerQueue.length >= count);
+    final int count = _pointerLocations!.keys.length;
+    assert(_pointerQueue!.length >= count);
 
     /// In case of just one pointer registered, reconfigure [_initialLine]
     if (count < 2) {
       _initialLine = _currentLine;
     } else if (_initialLine != null &&
-        _initialLine.pointerStartId == _pointerQueue[0] &&
-        _initialLine.pointerEndId == _pointerQueue[1]) {
+        _initialLine!.pointerStartId == _pointerQueue![0] &&
+        _initialLine!.pointerEndId == _pointerQueue![1]) {
       /// Rotation updated, set the [_currentLine]
       _currentLine = _LineBetweenPointers(
-          pointerStartId: _pointerQueue[0],
-          pointerStartLocation: _pointerLocations[_pointerQueue[0]],
-          pointerEndId: _pointerQueue[1],
-          pointerEndLocation: _pointerLocations[_pointerQueue[1]]);
+          pointerStartId: _pointerQueue![0],
+          pointerStartLocation: _pointerLocations![_pointerQueue![0]]!,
+          pointerEndId: _pointerQueue![1],
+          pointerEndLocation: _pointerLocations![_pointerQueue![1]]!);
     } else {
       /// A new rotation process is on the way, set the [_initialLine]
       _initialLine = _LineBetweenPointers(
-          pointerStartId: _pointerQueue[0],
-          pointerStartLocation: _pointerLocations[_pointerQueue[0]],
-          pointerEndId: _pointerQueue[1],
-          pointerEndLocation: _pointerLocations[_pointerQueue[1]]);
+          pointerStartId: _pointerQueue![0],
+          pointerStartLocation: _pointerLocations![_pointerQueue![0]]!,
+          pointerEndId: _pointerQueue![1],
+          pointerEndLocation: _pointerLocations![_pointerQueue![1]]!);
       _currentLine = null;
     }
   }
@@ -412,7 +421,7 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
     _initialLine = _currentLine;
     if (_state == _ScaleState.started) {
       if (onEnd != null) {
-        final VelocityTracker tracker = _velocityTrackers[pointer];
+        final VelocityTracker tracker = _velocityTrackers[pointer]!;
         assert(tracker != null);
 
         Velocity velocity = tracker.getVelocity();
@@ -424,10 +433,18 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
                 pixelsPerSecond: (pixelsPerSecond / pixelsPerSecond.distance) *
                     kMaxFlingVelocity);
           invokeCallback<void>(
-              'onEnd', () => onEnd(ScaleEndDetails(velocity: velocity)));
+              'onEnd',
+              () => {
+                    if (onEnd != null)
+                      {onEnd!(ScaleEndDetails(velocity: velocity))}
+                  });
         } else {
           invokeCallback<void>(
-              'onEnd', () => onEnd(ScaleEndDetails(velocity: Velocity.zero)));
+              'onEnd',
+              () => {
+                    if (onEnd != null)
+                      {onEnd!(ScaleEndDetails(velocity: Velocity.zero))}
+                  });
         }
       }
       _state = _ScaleState.accepted;
@@ -459,19 +476,28 @@ class ScaleGestureRecognizer extends OneSequenceGestureRecognizer {
     if (_state == _ScaleState.started && onUpdate != null)
       invokeCallback<void>(
           'onUpdate',
-              () => onUpdate(ScaleUpdateDetails(
-              scale: _scaleFactor,
-              focalPoint: _currentFocalPoint,
-              rotation: _computeRotationFactor(),
-              pointerEvent: pointerEvent,
-              pointCount: pointCount)));
+          () => {
+                if (onUpdate != null)
+                  {
+                    onUpdate!(ScaleUpdateDetails(
+                        scale: _scaleFactor,
+                        focalPoint: _currentFocalPoint,
+                        rotation: _computeRotationFactor(),
+                        pointerEvent: pointerEvent,
+                        pointCount: pointCount))
+                  }
+              });
   }
 
   void _dispatchOnStartCallbackIfNeeded() {
     assert(_state == _ScaleState.started);
     if (onStart != null)
-      invokeCallback<void>('onStart',
-              () => onStart(ScaleStartDetails(focalPoint: _currentFocalPoint)));
+      invokeCallback<void>(
+          'onStart',
+          () => {
+                if (onStart != null)
+                  {onStart!(ScaleStartDetails(focalPoint: _currentFocalPoint))}
+              });
   }
 
   @override

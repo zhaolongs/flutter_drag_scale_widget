@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 /**
  * 创建人： Created by zhaolong
  * 创建时间：Created by  on 2020/6/15.
@@ -18,7 +17,7 @@ typedef GestureDoubleTapCallback = void Function(DoubleDetails details);
 /// double tap callback details
 /// 双击的回调信息
 class DoubleDetails {
-  DoubleDetails({this.pointerEvent});
+  DoubleDetails({required this.pointerEvent});
   final PointerEvent pointerEvent;
   @override
   String toString() => 'DoubleDetails(pointerEvent: $pointerEvent)';

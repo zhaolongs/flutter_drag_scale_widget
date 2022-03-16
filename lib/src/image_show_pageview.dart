@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../flutterdragscalewidget.dart';
+import '../flutter_drag_scale_widget.dart';
 
 /// 创建人： Created by zhaolong
 /// 创建时间：Created by  on 2020/11/12.
@@ -15,9 +15,9 @@ class ImageShowPageView extends StatefulWidget {
   final List<String> imageList;
   final ImageShowType imageShowType;
   final BoxFit boxFit;
-
+  final ValueChanged<int> ?onPageChanged;
   ImageShowPageView(
-      {@required this.imageList, this.imageShowType = ImageShowType.ASSET,this.boxFit=BoxFit.contain});
+      {required this.imageList, this.imageShowType = ImageShowType.ASSET,this.boxFit=BoxFit.contain,this.onPageChanged});
 
   @override
   _TestPageState createState() => _TestPageState();
@@ -29,10 +29,9 @@ class _TestPageState extends State<ImageShowPageView> {
   bool _isBorder = true;
 
   ///PageView当前显示的角标
-  int currentIndex = 0;
+  int currentIndex = 1;
 
-  ///PageView的总页数
-  int imageTotal = 3;
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +60,7 @@ class _TestPageState extends State<ImageShowPageView> {
             color: Colors.white,
             borderRadius: BorderRadius.all(Radius.circular(20))),
         child: Text(
-          "$currentIndex/$imageTotal",
+          "$currentIndex/${widget.imageList.length}",
           style: TextStyle(fontSize: 12),
         ),
       ),
@@ -80,7 +79,10 @@ class _TestPageState extends State<ImageShowPageView> {
         ///页面切换时的回调
         ///[pageIndex]页面的角标
         onPageChanged: (int pageIndex) {
-          currentIndex = pageIndex;
+          currentIndex = pageIndex+1;
+          if(widget.onPageChanged!=null){
+            widget.onPageChanged!(currentIndex);
+          }
           setState(() {});
         },
 
@@ -97,7 +99,7 @@ class _TestPageState extends State<ImageShowPageView> {
         },
 
         ///子Item的个数
-        itemCount: imageTotal,
+        itemCount: widget.imageList.length,
       ),
     );
   }
