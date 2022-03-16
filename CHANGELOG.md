@@ -1,3 +1,3 @@
-## [1.0.0]  null safe 
+## [1.0.2]  null safe  文档更新
 
 

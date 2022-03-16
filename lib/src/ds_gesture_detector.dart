@@ -535,9 +535,9 @@ class GestureDetector extends StatelessWidget {
         () => ScaleGestureRecognizer(debugOwner: this),
         (ScaleGestureRecognizer instance) {
           instance
-            ..onStart = onScaleStart!
-            ..onUpdate = onScaleUpdate!
-            ..onEnd = onScaleEnd!;
+            ..onStart = onScaleStart
+            ..onUpdate = onScaleUpdate
+            ..onEnd = onScaleEnd;
         },
       );
     }
