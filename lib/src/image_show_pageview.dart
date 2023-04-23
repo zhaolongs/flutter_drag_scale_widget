@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -15,9 +16,19 @@ class ImageShowPageView extends StatefulWidget {
   final List<String> imageList;
   final ImageShowType imageShowType;
   final BoxFit boxFit;
-  final ValueChanged<int> ?onPageChanged;
+  final ValueChanged<int>? onPageChanged;
+  final bool useCache;
+  final Widget? placeholder;
+  final Widget? iconError;
+
   ImageShowPageView(
-      {required this.imageList, this.imageShowType = ImageShowType.ASSET,this.boxFit=BoxFit.contain,this.onPageChanged});
+      {required this.imageList,
+      this.useCache = true,
+      this.placeholder,
+      this.iconError,
+      this.imageShowType = ImageShowType.ASSET,
+      this.boxFit = BoxFit.contain,
+      this.onPageChanged});
 
   @override
   _TestPageState createState() => _TestPageState();
@@ -31,8 +42,6 @@ class _TestPageState extends State<ImageShowPageView> {
   ///PageView当前显示的角标
   int currentIndex = 1;
 
-
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -41,6 +50,7 @@ class _TestPageState extends State<ImageShowPageView> {
       children: [
         ///构建PageView
         buildPageView(),
+
         ///页面指示器
         buildPositioneIindicator()
       ],
@@ -79,8 +89,8 @@ class _TestPageState extends State<ImageShowPageView> {
         ///页面切换时的回调
         ///[pageIndex]页面的角标
         onPageChanged: (int pageIndex) {
-          currentIndex = pageIndex+1;
-          if(widget.onPageChanged!=null){
+          currentIndex = pageIndex + 1;
+          if (widget.onPageChanged != null) {
             widget.onPageChanged!(currentIndex);
           }
           setState(() {});
@@ -153,9 +163,39 @@ class _TestPageState extends State<ImageShowPageView> {
         fit: widget.boxFit,
       );
     } else if (widget.imageShowType == ImageShowType.NET) {
+      if (widget.useCache) {
+        return CachedNetworkImage(
+          imageUrl: widget.imageList[index],
+          fit: widget.boxFit,
+          placeholder: (context, url) => widget.placeholder == null
+              ? CircularProgressIndicator()
+              : widget.placeholder!,
+          errorWidget: (context, url, error) => widget.placeholder == null
+              ? Icon(Icons.error)
+              : widget.iconError!,
+        );
+      }
       return Image.network(
         widget.imageList[index],
         fit: widget.boxFit,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.error);
+        },
+        loadingBuilder: (
+          BuildContext context,
+          Widget child,
+          ImageChunkEvent? loadingProgress,
+        ) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
       );
     }
   }
