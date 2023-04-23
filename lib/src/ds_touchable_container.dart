@@ -109,7 +109,7 @@ class TouchableContainer extends StatefulWidget {
       EdgeInsets margin=EdgeInsets.zero,
       this.scaleChanged,
       this.doubleTapStillScale=false})
-      : this.margin = margin ?? EdgeInsets.all(0);
+      : this.margin = margin;
 
   _TouchableContainerState createState() => _TouchableContainerState();
 }
