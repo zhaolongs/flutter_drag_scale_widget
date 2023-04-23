@@ -11,6 +11,8 @@ ImageShowPageView(
       imageShowType: ImageShowType.NET,
       //图片的填充方式
       boxFit: BoxFit.contain,
+      //使用缓存
+      useCache:true,
       onPageChanged: (int index) {
         //滑动回调
       },
