@@ -1,6 +1,6 @@
 name: flutter_drag_scale_widget
 description: 对子Widget的拖动、缩放、旋转,图片缓存
-version: 1.0.3
+version: 1.0.4
 
 homepage: https://github.com/zhaolongs/flutter_drag_scale_widget.git
 

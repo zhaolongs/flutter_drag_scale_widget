@@ -19,12 +19,16 @@ class ImageShowPageView extends StatefulWidget {
   final bool useCache;
   final Widget? placeholder;
   final Widget? iconError;
+  final int initIndex;
+  final PageController? pageController;
 
   ImageShowPageView(
       {required this.imageList,
       this.useCache = true,
       this.placeholder,
       this.iconError,
+      this.initIndex = 0,
+      this.pageController,
       this.imageShowType = ImageShowType.ASSET,
       this.boxFit = BoxFit.contain,
       this.onPageChanged});
@@ -40,6 +44,25 @@ class _TestPageState extends State<ImageShowPageView> {
 
   ///PageView当前显示的角标
   int currentIndex = 1;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.pageController == null) {
+      int initIndex = widget.initIndex;
+      if (initIndex < 0) {
+        initIndex = 0;
+      } else if (initIndex > widget.imageList.length - 1) {
+        initIndex = widget.imageList.length - 1;
+      }
+      currentIndex = initIndex + 1;
+      _pageController = PageController(initialPage: initIndex);
+    } else {
+      _pageController = widget.pageController!;
+      currentIndex = _pageController.initialPage+1;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +108,7 @@ class _TestPageState extends State<ImageShowPageView> {
       left: 0,
       right: 0,
       child: PageView.builder(
+        controller: _pageController,
         ///页面切换时的回调
         ///[pageIndex]页面的角标
         onPageChanged: (int pageIndex) {
@@ -167,10 +191,10 @@ class _TestPageState extends State<ImageShowPageView> {
           imageUrl: widget.imageList[index],
           fit: widget.boxFit,
           placeholder: (context, url) => widget.placeholder == null
-              ? CircularProgressIndicator()
+              ? buildLoadingWidget()
               : widget.placeholder!,
           errorWidget: (context, url, error) => widget.placeholder == null
-              ? Icon(Icons.error)
+              ? buildErrorWidget()
               : widget.iconError!,
         );
       }
@@ -178,7 +202,7 @@ class _TestPageState extends State<ImageShowPageView> {
         widget.imageList[index],
         fit: widget.boxFit,
         errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.error);
+          return buildErrorWidget();
         },
         loadingBuilder: (
           BuildContext context,
@@ -186,17 +210,48 @@ class _TestPageState extends State<ImageShowPageView> {
           ImageChunkEvent? loadingProgress,
         ) {
           if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded /
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
                       loadingProgress.expectedTotalBytes!
-                  : null,
-            ),
+                      : null,
+                ),
+              )
+            ],
           );
         },
       );
     }
+  }
+  Widget buildErrorWidget(){
+    return  Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(Icons.error),
+        )
+      ],
+    );
+  }
+  Widget buildLoadingWidget(){
+    return  Stack(
+      alignment: Alignment.center,
+      children: [
+        SizedBox(
+          width: 40,
+          height: 40,
+          child: CircularProgressIndicator(),
+        )
+      ],
+    );
   }
 }
 
